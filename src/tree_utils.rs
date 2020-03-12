@@ -3,7 +3,8 @@ use std::iter::successors;
 use rnix::{
     NodeOrToken, SyntaxElement,
     SyntaxKind::{
-        NODE_ASSERT, NODE_IF_ELSE, NODE_LAMBDA, NODE_LET_IN, NODE_ROOT, NODE_WITH, TOKEN_WHITESPACE,
+        NODE_ASSERT, NODE_IF_ELSE, NODE_LAMBDA, NODE_LET_IN, NODE_ROOT, NODE_WITH, TOKEN_INDENT,
+        TOKEN_WHITESPACE,
     },
     SyntaxNode, SyntaxToken, WalkEvent,
 };
@@ -16,7 +17,9 @@ pub(crate) fn walk(node: &SyntaxNode) -> impl Iterator<Item = SyntaxElement> {
 }
 pub(crate) fn walk_non_whitespace(node: &SyntaxNode) -> impl Iterator<Item = SyntaxElement> {
     node.preorder_with_tokens().filter_map(|event| match event {
-        WalkEvent::Enter(element) => Some(element).filter(|it| it.kind() != TOKEN_WHITESPACE),
+        WalkEvent::Enter(element) => {
+            Some(element).filter(|it| (it.kind() != TOKEN_INDENT) & (it.kind() != TOKEN_WHITESPACE))
+        }
         WalkEvent::Leave(_) => None,
     })
 }

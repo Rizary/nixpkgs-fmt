@@ -17,20 +17,20 @@ use crate::{
     AtomEdit,
 };
 
-pub(super) fn fix(element: SyntaxElement, model: &mut FmtModel, anchor_set: &PatternSet<&Pattern>) {
+/*pub(super) fn fix(element: SyntaxElement, model: &mut FmtModel, anchor_set: &PatternSet<&Pattern>) {
     match element {
         NodeOrToken::Node(node) => {
             if let NODE_STRING = node.kind() {
                 fix_string_indentation(&node, model, anchor_set)
             }
         }
-        NodeOrToken::Token(token) => {
-            if let TOKEN_COMMENT = token.kind() {
-                fix_comment_indentation(&token, model)
-            }
-        }
+        //NodeOrToken::Token(token) => {
+        //    if let TOKEN_COMMENT = token.kind() {
+        //        fix_comment_indentation(&token, model)
+        //    }
+        //}
     }
-}
+}*/
 
 fn fix_string_indentation(
     node: &SyntaxNode,
@@ -88,15 +88,14 @@ fn fix_string_indentation(
 }
 
 /// If we indent multiline block comment, we should indent it's content as well.
-fn fix_comment_indentation(token: &SyntaxToken, model: &mut FmtModel) {
-    let is_block_comment = token.text().starts_with("/*");
-    let block = model.block_for(&token.clone().into(), BlockPosition::Before);
+pub(super) fn fix_comment_indentation(element: &SyntaxElement, model: &mut FmtModel) {
+    let is_block_comment = element.as_token().map(|e| e.text().starts_with("/*")).unwrap_or(false);
+    let block = model.block_for(element, BlockPosition::Before);
     if !is_block_comment {
-        let syntax_element = &token.clone().into();
-        let prev_is_token_in = prev_non_whitespace_token_sibling(syntax_element)
+        let prev_is_token_in = prev_non_whitespace_token_sibling(element)
             .map(|e| e.kind() == TOKEN_IN)
             .unwrap_or(false);
-        let comment_on_top = on_top_level(syntax_element);
+        let comment_on_top = on_top_level(element);
         if prev_is_token_in & comment_on_top {
             block.set_text("\n", Some(RuleName::new("Top level let comment")));
             return;
@@ -112,9 +111,10 @@ fn fix_comment_indentation(token: &SyntaxToken, model: &mut FmtModel) {
     if old_indent == new_indent {
         return;
     }
-    let mut curr_offset = token.text_range().start();
+    let mut curr_offset =
+        element.as_token().map(|e| e.text_range().start()).unwrap_or(TextUnit::from_usize(0));
     let mut first = true;
-    for line in token.text().lines() {
+    for line in element.as_token().map(|e| e.text().lines()).unwrap_or("".lines()) {
         let offset = curr_offset;
         curr_offset += TextUnit::of_str(line) + TextUnit::of_char('\n');
         if first {

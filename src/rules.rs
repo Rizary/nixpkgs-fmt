@@ -388,7 +388,6 @@ pub(crate) fn indentation() -> IndentDsl {
                   92
                 ]
             "#)
-
         .rule("Indent parenthesized expressions")
             .inside(NODE_PAREN)
             .not_matching([T!["("],T![")"]])
@@ -402,6 +401,15 @@ pub(crate) fn indentation() -> IndentDsl {
                   92
                 )
             "#)
+        .rule("Indent parenthesized expressions")
+            .inside(NODE_STRING)
+            .not_matching(p([TOKEN_STRING_START, TOKEN_STRING_END]))
+            .set(Indent)
+ 
+        .rule("Indent parenthesized expressions")
+            .inside(NODE_STRING_INTERPOL)
+            .not_matching(p([TOKEN_INTERPOL_START, TOKEN_INTERPOL_END]))
+            .set(Indent)
 
         .rule("Indent attribute set content")
             .inside(NODE_ATTR_SET)

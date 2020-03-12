@@ -5,7 +5,7 @@ mod indentation;
 mod spacing;
 mod fixes;
 
-use rnix::{SmolStr, SyntaxNode, TextRange};
+use rnix::{SmolStr, SyntaxKind::TOKEN_COMMENT, SyntaxNode, TextRange};
 
 use crate::{
     dsl::{IndentDsl, RuleName, SpacingDsl},
@@ -37,14 +37,13 @@ pub(crate) fn format(
     for element in walk_non_whitespace(root) {
         let block = model.block_for(&element, BlockPosition::Before);
         if !block.has_newline() {
-            // No need to indent an element if it doesn't start a line
+            //No need to indent an element if it doesn't start a line
             continue;
         }
 
         // In cases like
         //
-        // ```nix
-        //   param:
+        // ```nix        //   param:
         //     body
         // ```
         //
@@ -62,13 +61,16 @@ pub(crate) fn format(
         } else {
             indentation::default_indent(&element, &mut model, &anchor_set)
         }
+        if element.kind() == TOKEN_COMMENT {
+            fixes::fix_comment_indentation(&element, &mut model)
+        }
     }
 
     // Finally, do custom touch-ups like re-indenting of string literals and
     // replacing URLs with string literals.
-    for element in walk_non_whitespace(root) {
-        fixes::fix(element, &mut model, &anchor_set)
-    }
+    //for element in walk_non_whitespace(root) {
+    //    fixes::fix(element, &mut model, &anchor_set)
+    //}
 
     model.into_diff()
 }

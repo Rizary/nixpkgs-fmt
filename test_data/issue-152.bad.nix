@@ -11,7 +11,11 @@ in
   #comment
   x;
 baz = x:
-#comment
+/*
+ * decoreted
+ * block
+ * comment
+ */
   y:
   #comment
   foo+bar;
